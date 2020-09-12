@@ -62,7 +62,7 @@ function genTree(deep, node, value) {
     if(value === 1) randValue = function() {return 1};
     node = (node || 3) | 0;
     if(node < 1) node = 3;
-    if((1 - Math.pow(node, deep)) / (1 - node) > 1000000) alert('too large!!!');
+    if((1 - Math.pow(node, deep)) / (1 - node) > 300000) return false;
     while(n++ < deep) {
         var m = Math.pow(node, n - 1);
         if(m === 1) {
@@ -100,10 +100,17 @@ function randValue() {
 this.onmessage = function(e) {
     var tree, leafs, st, txt;
 
-    st = Date.now();
-    tree = genTree(e.data.deep, e.data.node, e.data.value);
-    txt = '生成节点耗时：' + (Date.now() - st) / 1000 + 's';
-    this.postMessage({txt: txt});
+    if(e.data.tree) {
+        tree = e.data.tree;
+    } else {
+        st = Date.now();
+        tree = genTree(e.data.deep, e.data.node, e.data.value);
+        if(!tree) {
+            return this.postMessage('超过30万节点，性能严重下降');
+        }
+        txt = '生成节点耗时：' + (Date.now() - st) / 1000 + 's';
+        this.postMessage({txt: txt});
+    }
 
     st = Date.now();
     leafs = findLeaf(tree);

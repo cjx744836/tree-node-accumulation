@@ -47,6 +47,25 @@
                 stroke-dashoffset: -120px;
             }
         }
+        input {
+            width: 500px;
+        }
+    .post-param {
+        width: 370px;
+        background: #eee;
+        padding: 10px;
+        position: fixed;
+        top: 100px;
+        display: none;
+        left: 50%;
+        margin-left: -185px;
+    }
+        .post-param input {
+            width: 100px;
+        }
+        .post-param > div {
+            margin: 3px 0;
+        }
 </style>
 <body >
 
@@ -67,6 +86,9 @@
         <option value="15">15</option>
         <option value="16">16</option>
         <option value="17">17</option>
+        <option value="18">18</option>
+        <option value="19">19</option>
+        <option value="20">20</option>
     </select>
     每个节点子节点数
     <select>
@@ -77,6 +99,18 @@
         <option value="6">6</option>
         <option value="7">7</option>
         <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+        <option value="12">12</option>
+        <option value="13">13</option>
+        <option value="14">14</option>
+        <option value="15">15</option>
+        <option value="16">16</option>
+        <option value="17">17</option>
+        <option value="18">18</option>
+        <option value="19">19</option>
+        <option value="20">20</option>
     </select>
     节点value值
     <select>
@@ -84,11 +118,30 @@
         <option value="2">全部随机</option>
     </select>
     共<span>3</span>个节点
-    <button>计算节点</button>
+    <button class="btn_calc">计算节点</button>
+    <div>
+        树型数据地址<input type="text" class="ipt_url">
+        <select>
+            <option value="get">get</option>
+            <option value="post">post</option>
+        </select>
+        <button class="btn_url">获取并计算</button>(返回的数据节点字段必须包含id, pid, value, children, 其中value必须是数字类型)
+    </div>
     <div class="rs"></div>
     <svg viewBox="25 25 50 50" class="circular" style="display: none"><circle cx="50" cy="50" r="20" fill="none" class="path"></circle></svg>
+    <div class="post-param">
+        <div>
+            key<input type="text">value<input type="text"><button class="add">add</button><button class="qd">ok</button>
+        </div>
+    </div>
 <script>
     var sel = document.querySelectorAll('select');
+    var btn_calc = document.querySelector('.btn_calc');
+    var btn_url = document.querySelector('.btn_url');
+    var ipt_url = document.querySelector('.ipt_url');
+    var btn_add = document.querySelector('.add');
+    var btn_qd = document.querySelector('.qd');
+    var post_param = document.querySelector('.post-param');
 
 
     function showLoading() {
@@ -106,26 +159,121 @@
         document.querySelector('.rs').appendChild(d);
     }
 
+    btn_qd.onclick = function() {
+        var ipts = [].slice.call(document.querySelectorAll('.post-param input'));
+        var keys = [], v = [];
+        ipts.forEach((d, i) => {
+            if(i % 2 === 0) {
+                keys.push(d.value);
+            } else {
+                v.push(d.value);
+            }
+        });
+        var p = [];
+        keys.forEach((d, i) => {
+            if(d) {
+                p.push(`${d}=${v[i]}`)
+            }
+        });
+        ops.param = p.join('&');
+        f2();
+    };
+
+    btn_add.onclick = function() {
+        var d = document.createElement('div');
+        d.innerHTML = `key<input type="text">value<input type="text">`;
+        post_param.appendChild(d);
+    };
+
+    var f1 = function(e) {
+        e.stopPropagation();
+    };
+    var f2 = function() {
+        post_param.style.display = 'none';
+        document.removeEventListener('click', f1);
+        document.removeEventListener('click', f2);
+    };
+    post_param.addEventListener('click', f1);
     sel[0].onchange = calcNode;
     sel[1].onchange = calcNode;
+    sel[3].onchange = function() {
+        if(this.value === 'post') {
+            post_param.style.display = 'block';
+            setTimeout(function() {
+                document.addEventListener('click', f2);
+            });
+            ops.method = 'post';
+        } else {
+            ops.param = '';
+            ops.method = 'get';
+        }
+    };
 
     function calcNode(e) {
         document.querySelector('span').innerHTML = (1 - Math.pow(Number(sel[1].value), Number(sel[0].value))) / (1 - Number(sel[1].value));
     }
     var tree;
-    document.querySelector('button').onclick = function() {
+    var ops = {method: 'get', param: ''};
+    btn_url.onclick = function() {
+        if(!/^https?/.test(ipt_url.value)) return alert('不是一个有效的地址');
+        ops.url = ipt_url.value;
+        request().then(function(res) {
+            showLoading();
+            btn_qd.setAttribute('disabled', 'disabled');
+            document.querySelector('.rs').innerHTML = '';
+
+            var worker = new Worker('calc_node.js');
+            worker.postMessage({tree: res});
+            worker.onmessage = function(e) {
+                text(e.data.txt);
+                if(e.data.tree) {
+                    tree = e.data.tree;
+                    lookUp(tree);
+                    btn_qd.removeAttribute('disabled');
+                    hideLoading();
+                }
+            };
+        });
+    };
+
+    function request() {
+        return new Promise(function(resolve) {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function(e) {
+                if(xhr.readyState === 4) {
+                    if(xhr.status === 200) resolve(xhr.response);
+                    else alert(xhr.statusText);
+                }
+            };
+            xhr.onerror = function(e) {
+                alert(e.message);
+            };
+            xhr.open(ops.method, ops.url);
+            xhr.responseType = 'json';
+            xhr.setRequestHeader('content-type', 'application/x-www-form-urlencoded');
+            xhr.withCredentials = true;
+            xhr.send(ops.param);
+        });
+    }
+
+    btn_calc.onclick = function() {
         showLoading();
-        document.querySelector('button').setAttribute('disabled', 'disabled');
+        btn_calc.setAttribute('disabled', 'disabled');
         document.querySelector('.rs').innerHTML = '';
 
         var worker = new Worker('calc_node.js');
         worker.postMessage({deep: Number(sel[0].value), node: Number(sel[1].value), value: Number(sel[2].value)});
         worker.onmessage = function(e) {
+            if(typeof e.data === 'string') {
+                hideLoading();
+                btn_calc.removeAttribute('disabled');
+                return alert(e.data);
+            }
             text(e.data.txt);
             if(e.data.tree) {
                 tree = e.data.tree;
                 lookUp(tree);
-                document.querySelector('button').removeAttribute('disabled');
+                btn_calc.removeAttribute('disabled');
                 hideLoading();
             }
         };
