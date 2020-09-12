@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+	<style>
+    body {
+        position: relative;
+        font-size: 14px;
+    }
+        span {color: red}
+        .res {
+            padding: 3px;
+        }
+</style>
+<body >
+
+    深度<select>
+        <option value="2" selected>2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+        <option value="12">12</option>
+        <option value="13">13</option>
+        <option value="14">14</option>
+        <option value="15">15</option>
+        <option value="16">16</option>
+        <option value="17">17</option>
+    </select>
+    每个节点子节点数
+    <select>
+        <option value="2" selected>2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+    </select>
+    节点value值
+    <select>
+        <option value="1" selected>全部为1</option>
+        <option value="2">全部随机</option>
+    </select>
+    共<span>3</span>个节点
+    <button>计算节点</button>
+    <div class="rs"></div>
+<script>
+    var sel = document.querySelectorAll('select');
+
+
+    function text(txt) {
+        var d = document.createElement('div');
+        d.className = 'res';
+        d.innerHTML = txt;
+        document.querySelector('.rs').appendChild(d);
+    }
+
+    sel[0].onchange = calcNode;
+    sel[1].onchange = calcNode;
+
+    function calcNode(e) {
+        document.querySelector('span').innerHTML = (1 - Math.pow(Number(sel[1].value), Number(sel[0].value))) / (1 - Number(sel[1].value));
+    }
+    var tree;
+    document.querySelector('button').onclick = function() {
+        document.querySelector('button').setAttribute('disabled', 'disabled');
+        document.querySelector('.rs').innerHTML = '';
+
+        var worker = new Worker('calc_node.js');
+        worker.postMessage({deep: Number(sel[0].value), node: Number(sel[1].value), value: Number(sel[2].value)});
+        worker.onmessage = function(e) {
+            text(e.data.txt);
+            if(e.data.tree) {
+                tree = e.data.tree;
+                lookUp(tree);
+                document.querySelector('button').removeAttribute('disabled');
+            }
+        };
+    };
+
+    function lookUp(tree) {
+        var content = JSON.stringify(tree);
+        var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        var url = window.URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.innerText = '查看JSON';
+        //link.download = 'test.json';
+        link.target = '_black';
+        document.querySelector('.rs').appendChild(link);
+    }
+
+
+
+
+</script>
+</body>
+</html>
