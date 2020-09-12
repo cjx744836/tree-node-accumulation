@@ -1,10 +1,14 @@
+var map_parent = {};
+var map_calc = {};
+
 function findLeaf(tree) {
     var stack = [tree], leafs = [];
     while(stack.length) {
         var o = stack.shift();
         if(o.children) {
             o.children.forEach(d => {
-                d.parent = o;
+                map_parent[d.id] = o;
+                map_calc[d.pid] = 0;
                 stack.push(d);
             });
         } else {
@@ -18,13 +22,13 @@ function calcNode(nodes) {
     var stack = nodes;
     while(stack.length) {
         var o = stack.shift();
-        if(!o.calc) o.calc = o.value;
-        if(o.parent) {
-            if(!o.parent.calc) o.parent.calc = o.parent.value;
-            o.parent.calc += o.calc;
-            if(!o.parent.is_calc) {
-                o.parent.is_calc = 1;
-                stack.push(o.parent);
+        if(!o._h) o._h = o.value;
+        if(map_parent[o.id]) {
+            if(!map_parent[o.id]._h) map_parent[o.id]._h = map_parent[o.id].value;
+            map_parent[o.id]._h += o._h;
+            if(!map_calc[o.pid]) {
+                map_calc[o.pid] = 1;
+                stack.push(map_parent[o.id]);
             }
         }
     }
@@ -32,24 +36,20 @@ function calcNode(nodes) {
 
 function compareNode(tree) {
     tree.is_big = 1;
-    delete tree.is_calc;
-    delete tree.parent;
     var stack = [tree];
     while(stack.length) {
         var o = stack.shift();
         if(o.children) {
-            var tmp = {calc: -9999999}, max = -9999999;
+            var tmp = {_h: -9999999}, max = -9999999;
             o.children.forEach(d => {
-                if(d.calc >= max) {
-                    if(tmp.calc < d.calc) tmp.is_big = 0;
+                if(d._h >= max) {
+                    if(tmp._h < d._h) tmp.is_big = 0;
                     d.is_big = 1;
                     tmp = d;
-                    max = d.calc;
+                    max = d._h;
                 } else {
                     d.is_big = 0;
                 }
-                delete d.is_calc;
-                delete d.parent;
                 stack.push(d);
             });
         }
@@ -62,7 +62,7 @@ function genTree(deep, node, value) {
     if(value === 1) randValue = function() {return 1};
     node = (node || 3) | 0;
     if(node < 1) node = 3;
-    if((1 - Math.pow(node, deep)) / (1 - node) > 1000000) throw new Error('too large!!!');
+    if((1 - Math.pow(node, deep)) / (1 - node) > 1000000) alert('too large!!!');
     while(n++ < deep) {
         var m = Math.pow(node, n - 1);
         if(m === 1) {
