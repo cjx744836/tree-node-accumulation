@@ -15,6 +15,38 @@
         .res {
             padding: 3px;
         }
+    .circular {
+        height: 42px;
+        width: 42px;
+        animation: loading-rotate 2s linear infinite;
+    }
+    .path {
+        animation: loading-dash 1.5s ease-in-out infinite;
+        stroke-dasharray: 90,150;
+        stroke-dashoffset: 0;
+        stroke-width: 5;
+        stroke: #c00;
+        stroke-linecap: round;
+    }
+        @keyframes loading-rotate {
+            100% {
+                transform: rotate(1turn);
+            }
+        }
+        @keyframes loading-dash {
+            0% {
+                stroke-dasharray: 1,200;
+                stroke-dashoffset: 0;
+            }
+            50% {
+                stroke-dasharray: 90,150;
+                stroke-dashoffset: -40px;
+            }
+            100% {
+                stroke-dasharray: 90,150;
+                stroke-dashoffset: -120px;
+            }
+        }
 </style>
 <body >
 
@@ -54,9 +86,18 @@
     共<span>3</span>个节点
     <button>计算节点</button>
     <div class="rs"></div>
+    <svg viewBox="25 25 50 50" class="circular" style="display: none"><circle cx="50" cy="50" r="20" fill="none" class="path"></circle></svg>
 <script>
     var sel = document.querySelectorAll('select');
 
+
+    function showLoading() {
+        document.querySelector('.circular').style.display = 'block';
+    }
+
+    function hideLoading() {
+        document.querySelector('.circular').style.display = 'none';
+    }
 
     function text(txt) {
         var d = document.createElement('div');
@@ -73,6 +114,7 @@
     }
     var tree;
     document.querySelector('button').onclick = function() {
+        showLoading();
         document.querySelector('button').setAttribute('disabled', 'disabled');
         document.querySelector('.rs').innerHTML = '';
 
@@ -84,6 +126,7 @@
                 tree = e.data.tree;
                 lookUp(tree);
                 document.querySelector('button').removeAttribute('disabled');
+                hideLoading();
             }
         };
     };
