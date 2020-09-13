@@ -118,7 +118,7 @@
         <option value="2">全部随机</option>
     </select>
     共<span>3</span>个节点
-    <button class="btn_calc">计算节点</button>
+    <button class="btn_calc">计算节点</button>(生成的节点为完全二叉树左右对称，超过10万节点性能下降)
     <div>
         树型数据地址<input type="text" class="ipt_url">
         <select>
@@ -212,7 +212,7 @@
     function calcNode(e) {
         document.querySelector('span').innerHTML = (1 - Math.pow(Number(sel[1].value), Number(sel[0].value))) / (1 - Number(sel[1].value));
     }
-    var tree;
+    var tree1, tree2;
     var ops = {method: 'get', param: ''};
     btn_url.onclick = function() {
         if(!/^https?/.test(ipt_url.value)) return alert('不是一个有效的地址');
@@ -226,10 +226,13 @@
             worker.postMessage({tree: res});
             worker.onmessage = function(e) {
                 text(e.data.txt);
-                if(e.data.tree) {
-                    tree = e.data.tree;
-                    lookUp(tree);
-                    btn_qd.removeAttribute('disabled');
+                if(e.data.s === 1) {
+                    tree1 = e.data.tree;
+                    lookUp(tree1);
+                } else if(e.data.s === 2) {
+                    tree2 = e.data.tree;
+                    lookUp(tree2);
+                    btn_calc.removeAttribute('disabled');
                     hideLoading();
                 }
             };
@@ -270,9 +273,12 @@
                 return alert(e.data);
             }
             text(e.data.txt);
-            if(e.data.tree) {
-                tree = e.data.tree;
-                lookUp(tree);
+            if(e.data.s === 1) {
+                tree1 = e.data.tree;
+                lookUp(tree1);
+            } else if(e.data.s === 2) {
+                tree2 = e.data.tree;
+                lookUp(tree2);
                 btn_calc.removeAttribute('disabled');
                 hideLoading();
             }
